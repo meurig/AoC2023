@@ -21,12 +21,12 @@ def seperate_numbers(line: str) -> Tuple[Set[int], List[int]]:
 def test_seperate_numbers():
     line = 'Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53'
     expected_winners = {41, 48, 83, 86, 17}
-    expected_ours = {83, 86, 6, 31, 17, 9, 48, 53}
+    expected_ours = [83, 86, 6, 31, 17, 9, 48, 53]
     winners, ours = seperate_numbers(line)
     assert winners == expected_winners
     assert ours == expected_ours
 
-def calc(value: str) -> int:
+def calculate_score(value: str) -> int:
     winners, ours = seperate_numbers(value)
     matching_numbers = [ x for x in ours if x in winners ]
     matches = len(matching_numbers)
@@ -42,10 +42,10 @@ testdata = [
     ('Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11', 0),
 ]
 @pytest.mark.parametrize("value, expected", testdata)
-def test_calc(value: str, expected: int):
+def test_calculate_score(value: str, expected: int):
     # arrange
     # act
-    result = calc(value)
+    result = calculate_score(value)
     # assert
     assert result == expected
 
@@ -53,7 +53,7 @@ def test_calc(value: str, expected: int):
 def calc_all(data: list) -> int:
     total = 0
     for x in data:
-        total += calc(x)
+        total += calculate_score(x)
     return total
 
 def test_calc_all():
