@@ -2,6 +2,8 @@ from day01 import day01part1, day01part2
 from day02 import day02part1, day02part2
 from day03 import day03part1, day03part2
 from day04 import day04part1, day04part2
+from day05 import day05part1, day05part2
+from day06 import day06
 
 
 def main():
@@ -13,6 +15,9 @@ def main():
     day03part2.run()
     day04part1.run()
     day04part2.run()
+    day05part1.run()
+    day05part2.run()
+    day06.run()
 
 
 if __name__ == '__main__':

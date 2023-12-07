@@ -12,8 +12,14 @@ def run():
         83: 1360,
     }
 
+    races2 = {
+        48989083: 390110311121360
+    }
+
     result = get_multiplied_margins_of_error(races)
+    result2 = get_multiplied_margins_of_error(races2)
     print(f'Day06 part 1: {result}')
+    print(f'Day06 part 2: {result2}')
 
 
 def get_speeds_for_exact_matches(time, distance) -> Tuple[float, float]:
@@ -67,7 +73,7 @@ def get_margin_of_error(time: int, distance: int) -> int:
 @pytest.mark.parametrize("time, distance, expected", [
     (7, 9, 4),
     (15, 40, 8),
-
+    (71530, 940200, 71503)
 ])
 def test_get_margin_of_error(time, distance, expected):
     actual = get_margin_of_error(time, distance)
