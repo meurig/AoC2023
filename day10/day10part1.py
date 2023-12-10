@@ -10,10 +10,6 @@ def run():
     result = length_to_furthest_point(rows, start_char)
     print(f'Day10 part 1: {result}')
 
-def get_char_at(rows: list[str], position: (int, int)) -> str:
-    i, j = position
-    return rows[i][j]
-
 def take_step(rows: list[str], current_position: (int, int), previous_position: (int, int)) -> (int, int):
     i, j = current_position
     char = rows[i][j]
