@@ -1,51 +1,36 @@
 from pathlib import Path
 import pytest
-
+from functools import cache
 
 def run():
     with open(Path(__file__).parent / 'Input.txt') as f:
         lines = f.read().split('\n')
 
-    result = sum_all_arrangements(lines)
-    print(f'Day12 part 1: {result}')
+    result1 = sum_all_arrangements(lines, False)
+    print(f'Day12 part 1: {result1}')
+    result2 = sum_all_arrangements(lines, True)
+    print(f'Day12 part 2: {result2}')
 
-def split_row(row: str) -> (str, list[int]):
+def unfold_input(value: str, pattern: str) -> (str, list[int]):
+    new_value = value
+    new_pattern = pattern
+    for _ in range(4):
+        new_value += '?' + value
+        new_pattern += ',' + pattern
+    return new_value, new_pattern
+
+def test_unfold_input():
+    value = '.#'
+    pattern = '1'
+    expected = ('.#?.#?.#?.#?.#', '1,1,1,1,1')
+    actual = unfold_input(value, pattern)
+    assert actual == expected
+
+def split_row(row: str) -> (str, str):
     value = row.split(' ')[0]
-    pattern = [int(x) for x in row.split(' ')[1].split(',')]
+    pattern = row.split(' ')[1]
     return value, pattern
 
-def find_arrangements(value: str, i: int, pattern: list[int]) -> list[str]:
-    start = value[:i]
-    if '?' in start:
-        raise ValueError(f'unexpected ? in start of string {start}')
-    if not pattern:
-        if '#' in value[i:]: # have patterns that can't possibly match
-            return []
-        else:
-            return [value.replace('?', '.')]
-    size = pattern[0]
-    if len(value) < i + size: # doesn't fit
-        return []
-
-    results = []
-    reached_end = len(value) == i + size
-    previous_char = None if i == 0 else value[i - 1]
-    next_char = None if reached_end else value[i + size]
-    potential_match = value[i:i + size]
-    if '.' not in potential_match and next_char != '#' and previous_char != '#': # we have a match!
-        # get results assuming match
-        middle = ''.join(['#'] * size)
-        end = '' if reached_end else '.' + value[i+size+1:]
-        results += find_arrangements(start + middle + end, i+size+1, pattern[1:])
-
-
-    # if current char is # it's only valid to be part of a match
-    if not (value[i] == '#'):
-        # otherwise we also get results assuming not match
-        middle = '.'
-        end = value[i+1:]
-        results += find_arrangements(start + middle + end, i+1, pattern)
-    return results
 
 test_arrangements= [
     ('. 1', []),
@@ -172,10 +157,48 @@ test_arrangements= [
     ]),
 ]
 
-@pytest.mark.parametrize('row, expected', test_arrangements)
-def test_find_arrangements(row, expected):
+@cache
+def recursive_count_arrangements(value: str, pattern_str: str) -> int:
+    pattern = [] if len(pattern_str) == 0 else [int(x) for x in pattern_str.split(',')]
+    if not pattern:
+        if '#' in value:  # have patterns that can't possibly match
+            return 0
+        else:
+            return 1
+
+    if sum(pattern) + len(pattern) - 1 > len(value):  # doesn't fit
+        return 0
+
+    size = pattern[0]
+    result = 0
+    reached_end = len(value) == size
+    next_char = None if reached_end else value[size]
+    potential_match = value[0:size]
+    if '.' not in potential_match and next_char != '#':  # we have a match!
+        # get results assuming match
+        if reached_end:
+            return 1 if len(pattern) == 1 else 0
+        elif len(value) == size + 1:  # almost reached end
+            if len(pattern) == 1:
+                result = 1
+        else:
+            new_value = value[size + 1:] # we skip an extra 1 as it must be a '.' for a space between '#'s
+            result = recursive_count_arrangements(new_value, ','.join([str(x) for x in pattern[1:]]))
+
+    # if current char is # it's only valid to be part of a match
+    # if we're already at the end, no point carrying on
+    if not value[0] == '#' and not reached_end:
+        # otherwise we also get results assuming not match
+        new_value = value[1:]
+        result += recursive_count_arrangements(new_value, ','.join([str(x) for x in pattern]))
+
+    return result
+
+@pytest.mark.parametrize('row, arrangements', test_arrangements)
+def test_recursive_count_arrangements(row, arrangements):
     value, pattern = split_row(row)
-    actual = find_arrangements(value, 0, pattern)
+    expected = len(arrangements)
+    actual = recursive_count_arrangements(value, pattern)
     assert actual == expected
 
 testdata = [
@@ -187,26 +210,33 @@ testdata = [
     ('?###???????? 3,2,1', 10),
 ]
 
-def count_arrangements(row: str) -> int:
+def count_arrangements(row: str, unfold: bool) -> int:
     value, pattern = split_row(row)
-    arrangements = find_arrangements(value, 0, pattern)
-    return len(arrangements)
+    if unfold:
+        value, pattern = unfold_input(value, pattern)
+    count = recursive_count_arrangements(value, pattern)
+    return count
 
 @pytest.mark.parametrize("value, expected", testdata)
 def test_count_arrangements(value, expected):
-    actual = count_arrangements(value)
+    actual = count_arrangements(value, False)
     assert actual == expected
 
-def sum_all_arrangements(lines: list[str]) -> int:
+def sum_all_arrangements(lines: list[str], unfold: bool) -> int:
     total = 0
-    for row in lines:
-        total += count_arrangements(row)
+    for i, row in enumerate(lines):
+        total += count_arrangements(row, unfold)
     return total
 
 def test_sum_all_arrangements():
     rows = [x for (x, y) in testdata]
-    actual = sum_all_arrangements(rows)
+    actual = sum_all_arrangements(rows, False)
     assert actual == 21
+
+def test_sum_all_arrangements_unfolded():
+    rows = [x for (x, y) in testdata]
+    actual = sum_all_arrangements(rows, True)
+    assert actual == 525152
 
 if __name__ == '__main__':
     run()
