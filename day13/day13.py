@@ -1,3 +1,4 @@
+import time
 from itertools import groupby
 from pathlib import Path
 
@@ -9,11 +10,13 @@ def run():
         lines = f.read().split('\n')
     patterns = [list(g) for k, g in groupby(lines, key=lambda x: x == '') if not k]
 
+    start_time = time.time()
     result1 = summarize_notes(patterns, False)
-    print(f'Day13 part 1: {result1}')
+    print(f'Day13 part 1: {result1} (in {(time.time() - start_time):.2f}s)')
 
+    start_time = time.time()
     result2 = summarize_notes(patterns, True)
-    print(f'Day13 part 2: {result2}')
+    print(f'Day13 part 2: {result2} (in {(time.time() - start_time):.2f}s)')
 
 def find_mirror_with_transpose(pattern: list[str], smudge: bool) -> (int, bool):
     horizontal_mirror = find_mirror(pattern, smudge)

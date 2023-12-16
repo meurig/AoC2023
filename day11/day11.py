@@ -1,3 +1,4 @@
+import time
 import pytest
 from pathlib import Path
 
@@ -6,10 +7,13 @@ def run():
     with open(Path(__file__).parent / 'Input.txt') as f:
         lines = f.read().split('\n')
 
+    start_time = time.time()
     result1 = sum_of_shortest_paths(lines, 1)
-    print(f'Day11 part 1: {result1}')
+    print(f'Day11 part 1: {result1} (in {(time.time() - start_time):.2f}s)')
+
+    start_time = time.time()
     result2 = sum_of_shortest_paths(lines, 1000000)
-    print(f'Day11 part 2: {result2}')
+    print(f'Day11 part 2: {result2} (in {(time.time() - start_time):.2f}s)')
 
 def find_empty_space(rows: list[str]) -> (list[int], list[int]):
     empty_rows = [True] * len(rows)

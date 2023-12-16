@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from pathlib import Path
 
@@ -8,11 +10,13 @@ def run():
     with open(Path(__file__).parent / 'Input.txt') as f:
         lines = f.read().split('\n')
 
+    start_time = time.time()
     result1 = calc_north_load(lines)
-    print(f'Day14 part 1: {result1}')
+    print(f'Day14 part 1: {result1} (in {(time.time() - start_time):.2f}s)')
 
+    start_time = time.time()
     lines, load = cycle(lines, 1000000000)
-    print(f'Day14 part 2: {load}')
+    print(f'Day14 part 2: {load} (in {(time.time() - start_time):.2f}s)')
 
 
 test_data = [

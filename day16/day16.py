@@ -1,3 +1,4 @@
+import time
 from enum import Enum, StrEnum
 from functools import cache
 from pathlib import Path
@@ -5,13 +6,18 @@ from pathlib import Path
 
 def run():
     with open(Path(__file__).parent / 'Input.txt') as f:
-        lines = f.read().split('\n')
+        str_lines = f.read()
+        lines = str_lines.split('\n')
+        row_length = len(lines[0])
+        col_length = len(lines)
 
-    result = count_energised_tiles(lines, (0,0), Heading.RIGHT)
-    print(f'Day16 part 1: {result}')
+    start_time = time.time()
+    result = count_energised_tiles(str_lines, row_length, col_length, (0,0), Heading.RIGHT)
+    print(f'Day16 part 1: {result} (in {(time.time() - start_time):.2f}s)')
 
-    result2 = get_max_energised_tiles(lines)
-    print(f'Day16 part 2: {result2}')
+    start_time = time.time()
+    result2 = get_max_energised_tiles(str_lines, row_length, col_length)
+    print(f'Day16 part 2: {result2} (in {(time.time() - start_time):.2f}s)')
 
 class Heading(Enum):
     RIGHT = 1
@@ -47,9 +53,12 @@ def move(position: (int, int), direction: Heading) -> ((int, int), Heading):
             return (x - 1, y), direction
     raise ValueError(f'unexpected heading: {direction}')
 
-def calc_new_positions(lines: list[str], start_pos: (int, int), direction: Heading) -> list[((int, int), Heading)]:
+@cache
+def calc_new_positions(
+        str_lines, row_length, col_length, start_pos: (int, int), direction: Heading
+) -> list[((int, int), Heading)]:
     x, y = start_pos
-    current_char = lines[x][y]
+    current_char = str_lines[x * (row_length + 1) + y]
     match current_char:
         case Tile.EMPTY:
             return [move(start_pos, direction)]
@@ -89,18 +98,16 @@ def calc_new_positions(lines: list[str], start_pos: (int, int), direction: Headi
                             move(start_pos, Heading.LEFT)]
 
 def traverse(
-        lines: list[str], current_pos: (int, int), direction: Heading, visited: set[((int, int), Heading)]
+        str_lines: str, row_length: int, col_length: int, current_pos: (int, int), direction: Heading, visited: set[((int, int), Heading)]
 ) -> set[((int, int), Heading)]:
-    new_positions = calc_new_positions(lines, current_pos, direction)
+    new_positions = calc_new_positions(str_lines, row_length, col_length, current_pos, direction)
     visited.add((current_pos, direction))
-    col_length = len(lines)
-    row_length = len(lines[0])
     while len(new_positions) == 1:
         new_position, new_heading = new_positions[0]
         if in_bounds(new_position, col_length, row_length):
             if (new_position, new_heading) not in visited:
                 visited.add((new_position, new_heading))
-                new_positions = calc_new_positions(lines, new_position, new_heading)
+                new_positions = calc_new_positions(str_lines, row_length, col_length, new_position, new_heading)
             else:
                 new_positions = []
         else:
@@ -108,12 +115,12 @@ def traverse(
     for new_position, new_heading in new_positions:
         if in_bounds(new_position, col_length, row_length):
             if (new_position, new_heading) not in visited:
-                visited.update(traverse(lines, new_position, new_heading, visited))
+                visited.update(traverse(str_lines, row_length, col_length, new_position, new_heading, visited))
     return visited
 
 def test_traverse():
-    lines = get_test_data()
-    visited = traverse(lines, (0,0), Heading.RIGHT, set([]))
+    str_lines, row_length, col_length = get_test_data()
+    visited = traverse(str_lines, row_length, col_length, (0,0), Heading.RIGHT, set([]))
     actual = { position for position, heading in visited }
     assert (0, 0) in actual
     assert (0, 1) in actual
@@ -128,15 +135,18 @@ def test_traverse():
     assert (2, 2) not in actual
     assert (2, 3) not in actual
 
-def count_energised_tiles(lines: list[str], position: (int, int), heading: Heading) -> int:
-    visited = traverse(lines, position, heading, set([]))
+def count_energised_tiles(str_lines: str, row_length: int, col_length: int, position: (int, int), heading: Heading) -> int:
+    visited = traverse(str_lines, row_length, col_length, position, heading, set([]))
     energised = {position for position, heading in visited}
     return len(energised)
 
-def get_test_data() -> list[str]:
+def get_test_data() -> (str, int, int):
     with open(Path(__file__).parent / 'test_input.txt') as f:
-        lines = f.read().split('\n')
-    return lines
+        str_lines = f.read()
+        lines = str_lines.split('\n')
+        row_length = len(lines[0])
+        col_length = len(lines)
+    return str_lines, row_length, col_length
 
 def test_get_test_data():
     expected = [
@@ -151,33 +161,35 @@ def test_get_test_data():
         '.|....-|.\\',
         r'..//.|....',
     ]
-    actual = get_test_data()
+    actual = get_test_data()[0].split('\n')
     assert actual == expected
 
 def test_count_energised_tiles():
     expected = 46
-    actual = count_energised_tiles(get_test_data(), (0,0), Heading.RIGHT)
+    str_lines, row_length, col_length = get_test_data()
+    actual = count_energised_tiles(str_lines, row_length, col_length, (0,0), Heading.RIGHT)
     assert actual == expected
 
-def get_max_energised_tiles(rows: list[str]) -> int:
+def get_max_energised_tiles(str_lines: str, row_length: int, col_length: int) -> int:
     current_max = 0
-    last_row_index = len(rows) - 1
-    last_column_index = len(rows[0]) -1
-    for i in range(len(rows)):
+    last_row_index = col_length - 1
+    last_column_index = row_length -1
+    for i in range(col_length):
         # down the left side
-        current_max = max(current_max, count_energised_tiles(rows, (i, 0), Heading.RIGHT))
+        current_max = max(current_max, count_energised_tiles(str_lines, row_length, col_length, (i, 0), Heading.RIGHT))
         # down the right side
-        current_max = max(current_max, count_energised_tiles(rows, (i, last_column_index), Heading.LEFT))
-    for j in range(len(rows[0])):
+        current_max = max(current_max, count_energised_tiles(str_lines, row_length, col_length, (i, last_column_index), Heading.LEFT))
+    for j in range(row_length):
         # across the top
-        current_max = max(current_max, count_energised_tiles(rows, (0, j), Heading.DOWN))
+        current_max = max(current_max, count_energised_tiles(str_lines, row_length, col_length, (0, j), Heading.DOWN))
         # across the bottom
-        current_max = max(current_max, count_energised_tiles(rows, (last_row_index, j), Heading.UP))
+        current_max = max(current_max, count_energised_tiles(str_lines, row_length, col_length, (last_row_index, j), Heading.UP))
     return current_max
 
 def test_get_max_energised_tiles():
     expected = 51
-    actual = get_max_energised_tiles(get_test_data())
+    str_lines, row_length, col_length = get_test_data()
+    actual = get_max_energised_tiles(str_lines, row_length, col_length)
     assert actual == expected
 
 if __name__ == '__main__':

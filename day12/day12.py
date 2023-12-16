@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 import pytest
 from functools import cache
@@ -6,10 +7,13 @@ def run():
     with open(Path(__file__).parent / 'Input.txt') as f:
         lines = f.read().split('\n')
 
+    start_time = time.time()
     result1 = sum_all_arrangements(lines, False)
-    print(f'Day12 part 1: {result1}')
+    print(f'Day12 part 1: {result1} (in {(time.time() - start_time):.2f}s)')
+
+    start_time = time.time()
     result2 = sum_all_arrangements(lines, True)
-    print(f'Day12 part 2: {result2}')
+    print(f'Day12 part 2: {result2} (in {(time.time() - start_time):.2f}s)')
 
 def unfold_input(value: str, pattern: str) -> (str, list[int]):
     new_value = value

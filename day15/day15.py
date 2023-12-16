@@ -1,3 +1,4 @@
+import time
 from collections import OrderedDict
 
 import pytest
@@ -9,11 +10,13 @@ def run():
         lines = f.read().split('\n')
     init_seq = lines[0].split(',')
 
+    start_time = time.time()
     result1 = sum_of_hashes(init_seq)
-    print(f'Day15 part 1: {result1}')
+    print(f'Day15 part 1: {result1} (in {(time.time() - start_time):.2f}s)')
 
+    start_time = time.time()
     result2 = sum_of_focusing_power(init_seq)
-    print(f'Day15 part 2: {result2}')
+    print(f'Day15 part 2: {result2} (in {(time.time() - start_time):.2f}s)')
 
 def split_step(step: str) -> (str, int, str, int):
     if '-' in step:
